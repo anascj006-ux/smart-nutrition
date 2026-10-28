@@ -36,7 +36,7 @@ router.get('/status', (req: Request, res: Response) => {
  */
 router.post('/analyze-food', async (req: Request, res: Response) => {
   try {
-    const { image, model, forceDemo } = req.body;
+    const { image, model, forceDemo, foodName } = req.body;
 
     if (!image) {
       return res.status(400).json({
@@ -49,6 +49,7 @@ router.post('/analyze-food', async (req: Request, res: Response) => {
     const analysis: GeminiNutritionResponse = await analyzeFoodWithGemini(image, {
       model,
       forceDemo: forceDemo === true,
+      hintFoodName: foodName,
     });
 
     // Save record to database for historical audit logging

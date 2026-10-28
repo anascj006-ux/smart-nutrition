@@ -332,13 +332,7 @@ export const MealsPage: React.FC<MealsPageProps> = ({ onNavigate }) => {
       <AddToMealModal
         isOpen={isQuickAddOpen}
         onClose={() => setIsQuickAddOpen(false)}
-        foodName="Chicken Biryani"
-        baseCalories={520}
-        baseProtein={28}
-        baseCarbs={62}
-        baseFat={18}
-        baseFiber={4}
-        servingUnit="plate"
+        initialMealType={quickAddSlot}
         onSuccess={fetchMeals}
       />
     </AppLayout>

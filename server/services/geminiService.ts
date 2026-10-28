@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { GoogleGenAI } from '@google/genai';
 import { FoodItem, INITIAL_FOODS } from '../data/foods';
 
@@ -47,6 +49,23 @@ async function validateAndExtractImageData(imagePayload: string): Promise<{ mime
     throw new Error('Please upload a valid food image.');
   }
 
+  // Support local public/images path
+  if (imagePayload.startsWith('/images/') || imagePayload.startsWith('images/')) {
+    try {
+      const cleanRel = imagePayload.replace(/^\/?images\//, '');
+      const localFile = path.join(process.cwd(), 'public', 'images', cleanRel);
+      if (fs.existsSync(localFile)) {
+        const buffer = fs.readFileSync(localFile);
+        const ext = path.extname(localFile).toLowerCase();
+        const mimeType = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+        const base64Data = buffer.toString('base64');
+        return { mimeType, base64Data };
+      }
+    } catch (e: any) {
+      console.warn('Failed to read local image file:', e?.message || e);
+    }
+  }
+
   // Support remote HTTP(S) image URLs (e.g. Unsplash sample photos)
   if (imagePayload.startsWith('http://') || imagePayload.startsWith('https://')) {
     try {
@@ -89,13 +108,13 @@ async function validateAndExtractImageData(imagePayload: string): Promise<{ mime
  */
 export async function analyzeFoodWithGemini(
   imagePayload: string,
-  options?: { model?: string; forceDemo?: boolean }
+  options?: { model?: string; forceDemo?: boolean; hintFoodName?: string }
 ): Promise<GeminiNutritionResponse> {
   const isDemo = options?.forceDemo || process.env.DEMO_MODE === 'true';
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (isDemo || !apiKey) {
-    return generateDemoResponse(undefined);
+    return generateDemoResponse(options?.hintFoodName);
   }
 
   // 1. Validate image
@@ -169,7 +188,7 @@ Return ONLY a raw JSON object (without markdown code blocks, backticks, or other
   }
 
   console.warn('All Gemini vision models failed or experienced high traffic, activating resilient Demo Mode fallback:', lastError?.message || lastError);
-  return generateDemoResponse(undefined);
+  return generateDemoResponse(options?.hintFoodName);
 }
 
 /**
@@ -395,32 +414,161 @@ function normalizeNutritionResponse(
  * Fallback Demo Mode response (offline / no API key)
  */
 function generateDemoResponse(queryFoodName?: string): GeminiNutritionResponse {
-  let matched: FoodItem | undefined;
-
   if (queryFoodName && queryFoodName.trim().length > 0) {
-    const q = queryFoodName.trim().toLowerCase();
-    matched = INITIAL_FOODS.find((f) => f.name.toLowerCase().includes(q) || q.includes(f.name.toLowerCase()));
+    const rawQ = queryFoodName.trim();
+    const qLower = rawQ.toLowerCase();
+
+    // Special handling for combination / multi-food meals: e.g. "Rice + Chicken Curry + Salad"
+    if (qLower.includes('+') || (qLower.includes('&') && !qLower.includes('dosa'))) {
+      const parts = rawQ.split(/[+&]/).map((p) => p.trim()).filter(Boolean);
+      const subFoods: DetectedFood[] = [];
+
+      for (const part of parts) {
+        const pLower = part.toLowerCase();
+        let itemMatch = INITIAL_FOODS.find(
+          (f) => f.name.toLowerCase() === pLower || f.name.toLowerCase().includes(pLower) || pLower.includes(f.name.toLowerCase())
+        );
+
+        if (!itemMatch) {
+          if (pLower.includes('salad')) {
+            itemMatch = {
+              id: 'food-salad-adhoc',
+              name: 'Fresh Salad',
+              category: 'Healthy Staples',
+              calories: 65,
+              protein: 1.5,
+              carbohydrates: 12,
+              fat: 0.5,
+              fiber: 3.2,
+              defaultServing: 1,
+              servingUnit: 'cup',
+              unitWeightGrams: 100,
+              image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=80',
+              description: 'Fresh crisp garden salad with cucumber, tomato, and lemon dressing.',
+            };
+          } else if (pLower.includes('rice')) {
+            itemMatch = INITIAL_FOODS.find((f) => f.id === 'food-rice') || INITIAL_FOODS[0];
+          } else if (pLower.includes('curry') || pLower.includes('chicken')) {
+            itemMatch = INITIAL_FOODS.find((f) => f.id === 'food-chicken-curry') || INITIAL_FOODS[0];
+          } else {
+            itemMatch = INITIAL_FOODS[0];
+          }
+        }
+
+        subFoods.push({
+          name: itemMatch.name,
+          category: itemMatch.category,
+          confidence: 0.94,
+          serving: {
+            amount: itemMatch.defaultServing,
+            unit: itemMatch.servingUnit,
+            estimatedGrams: itemMatch.unitWeightGrams || 150,
+          },
+          nutrition: {
+            calories: itemMatch.calories,
+            protein: itemMatch.protein,
+            carbohydrates: itemMatch.carbohydrates,
+            fat: itemMatch.fat,
+            fiber: itemMatch.fiber,
+          },
+        });
+      }
+
+      const totalNutrition = subFoods.reduce(
+        (acc, item) => ({
+          calories: acc.calories + item.nutrition.calories,
+          protein: Math.round((acc.protein + item.nutrition.protein) * 10) / 10,
+          carbohydrates: Math.round((acc.carbohydrates + item.nutrition.carbohydrates) * 10) / 10,
+          fat: Math.round((acc.fat + item.nutrition.fat) * 10) / 10,
+          fiber: Math.round((acc.fiber + item.nutrition.fiber) * 10) / 10,
+        }),
+        { calories: 0, protein: 0, carbohydrates: 0, fat: 0, fiber: 0 }
+      );
+
+      return {
+        success: true,
+        foods: subFoods,
+        totalNutrition,
+        overallConfidence: 0.94,
+        disclaimer: 'Nutritional values are calculated estimates for this combination plate.',
+        source: 'demo',
+        healthInsights: [
+          `Balanced combination meal providing ${totalNutrition.protein}g protein across ${subFoods.length} items.`,
+          `Estimated total energy: ${totalNutrition.calories} kcal (~${Math.round((totalNutrition.calories / 2000) * 100)}% of recommended daily value).`,
+          `Delivers ${totalNutrition.fiber}g dietary fiber supporting gut health and glycemic stability.`,
+        ],
+      };
+    }
+
+    // Direct token matching
+    let matched = INITIAL_FOODS.find((f) => f.name.toLowerCase() === qLower);
+    if (!matched) {
+      matched = INITIAL_FOODS.find(
+        (f) => f.name.toLowerCase().includes(qLower) || qLower.includes(f.name.toLowerCase())
+      );
+    }
+    // Keyword match
+    if (!matched) {
+      const tokens = qLower.split(/\s+/);
+      for (const token of tokens) {
+        if (token.length < 3) continue;
+        matched = INITIAL_FOODS.find((f) => f.name.toLowerCase().includes(token));
+        if (matched) break;
+      }
+    }
+
+    if (matched) {
+      const primaryFood: DetectedFood = {
+        name: matched.name,
+        category: matched.category,
+        confidence: 0.95,
+        serving: {
+          amount: matched.defaultServing,
+          unit: matched.servingUnit,
+          estimatedGrams: matched.unitWeightGrams || 200,
+        },
+        nutrition: {
+          calories: matched.calories,
+          protein: matched.protein,
+          carbohydrates: matched.carbohydrates,
+          fat: matched.fat,
+          fiber: matched.fiber,
+        },
+      };
+
+      return {
+        success: true,
+        foods: [primaryFood],
+        totalNutrition: { ...primaryFood.nutrition },
+        overallConfidence: 0.95,
+        disclaimer: 'Nutritional values are estimates and may vary depending on ingredients and portion size.',
+        source: 'demo',
+        healthInsights: [
+          `Delivers ${matched.protein}g of protein per serving for muscle repair and satiety.`,
+          `Estimated at ${matched.calories} kcal (~${Math.round((matched.calories / 2000) * 100)}% of standard 2,000 kcal daily intake).`,
+          `Provides ${matched.fiber}g of dietary fiber supporting digestive wellness.`,
+        ],
+      };
+    }
   }
 
-  if (!matched) {
-    matched = INITIAL_FOODS.find((f) => f.id === 'food-chicken-biryani') || INITIAL_FOODS[0];
-  }
-
+  // Default fallback food
+  const fallback = INITIAL_FOODS.find((f) => f.id === 'food-chicken-biryani') || INITIAL_FOODS[0];
   const primaryFood: DetectedFood = {
-    name: matched.name,
-    category: matched.category,
+    name: fallback.name,
+    category: fallback.category,
     confidence: 0.92,
     serving: {
-      amount: matched.defaultServing,
-      unit: matched.servingUnit,
-      estimatedGrams: matched.unitWeightGrams || 350,
+      amount: fallback.defaultServing,
+      unit: fallback.servingUnit,
+      estimatedGrams: fallback.unitWeightGrams || 350,
     },
     nutrition: {
-      calories: matched.calories,
-      protein: matched.protein,
-      carbohydrates: matched.carbohydrates,
-      fat: matched.fat,
-      fiber: matched.fiber,
+      calories: fallback.calories,
+      protein: fallback.protein,
+      carbohydrates: fallback.carbohydrates,
+      fat: fallback.fat,
+      fiber: fallback.fiber,
     },
   };
 
@@ -432,9 +580,9 @@ function generateDemoResponse(queryFoodName?: string): GeminiNutritionResponse {
     disclaimer: 'Nutritional values are estimates and may vary depending on ingredients and portion size.',
     source: 'demo',
     healthInsights: [
-      `Delivers ${matched.protein}g of protein per serving for muscle repair and satiety.`,
-      `Estimated at ${matched.calories} kcal (~${Math.round((matched.calories / 2000) * 100)}% of standard 2,000 kcal daily intake).`,
-      `Provides ${matched.fiber}g of dietary fiber supporting digestive wellness.`,
+      `Delivers ${fallback.protein}g of protein per serving for muscle repair and satiety.`,
+      `Estimated at ${fallback.calories} kcal (~${Math.round((fallback.calories / 2000) * 100)}% of standard 2,000 kcal daily intake).`,
+      `Provides ${fallback.fiber}g of dietary fiber supporting digestive wellness.`,
     ],
   };
 }

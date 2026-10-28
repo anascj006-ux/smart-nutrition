@@ -115,7 +115,7 @@ export const INITIAL_FOODS: FoodItem[] = [
     defaultServing: 1,
     servingUnit: 'bowl',
     unitWeightGrams: 200,
-    image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&auto=format&fit=crop&q=80',
+    image: '/images/foods/sambar.jpg',
     description: 'Nutrient-rich lentil stew with drumsticks, carrots, pumpkin, tamarind, and aromatic sambar masala.',
     micronutrients: { sodium_mg: 490, potassium_mg: 310, calcium_mg: 48, iron_mg: 2.1, vitamin_c_mg: 15 }
   },
@@ -147,7 +147,7 @@ export const INITIAL_FOODS: FoodItem[] = [
     defaultServing: 1,
     servingUnit: 'bowl',
     unitWeightGrams: 180,
-    image: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=500&auto=format&fit=crop&q=80',
+    image: '/images/foods/lemon-rice.jpg',
     description: 'Fragrant seasoned rice with freshly squeezed lemon juice, crunchy peanuts, mustard seeds, and turmeric.',
     micronutrients: { sodium_mg: 340, potassium_mg: 130, calcium_mg: 25, iron_mg: 1.4, vitamin_c_mg: 18 }
   },
@@ -243,7 +243,7 @@ export const INITIAL_FOODS: FoodItem[] = [
     defaultServing: 2,
     servingUnit: 'piece',
     unitWeightGrams: 60,
-    image: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=500&auto=format&fit=crop&q=80',
+    image: '/images/foods/poori.jpg',
     description: 'Puffy golden whole wheat bread deep-fried to crisp perfection.',
     micronutrients: { sodium_mg: 120, potassium_mg: 80, calcium_mg: 14, iron_mg: 0.9, vitamin_c_mg: 0 }
   },
@@ -259,7 +259,7 @@ export const INITIAL_FOODS: FoodItem[] = [
     defaultServing: 1,
     servingUnit: 'bowl',
     unitWeightGrams: 160,
-    image: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=500&auto=format&fit=crop&q=80',
+    image: '/images/foods/upma.jpg',
     description: 'Savory roasted semolina hash seasoned with mustard seeds, ginger, green chilies, and vegetables.',
     micronutrients: { sodium_mg: 290, potassium_mg: 110, calcium_mg: 22, iron_mg: 1.6, vitamin_c_mg: 4 }
   },
@@ -371,7 +371,7 @@ export const INITIAL_FOODS: FoodItem[] = [
     defaultServing: 1,
     servingUnit: 'cup',
     unitWeightGrams: 150,
-    image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=500&auto=format&fit=crop&q=80',
+    image: '/images/foods/curd.jpg',
     description: 'Thick, creamy plain Indian yogurt rich in active gut-friendly lactobacillus cultures.',
     micronutrients: { sodium_mg: 70, potassium_mg: 230, calcium_mg: 190, iron_mg: 0.1, vitamin_c_mg: 1 }
   },
@@ -387,7 +387,7 @@ export const INITIAL_FOODS: FoodItem[] = [
     defaultServing: 1,
     servingUnit: 'piece',
     unitWeightGrams: 50,
-    image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=500&auto=format&fit=crop&q=80',
+    image: '/images/foods/boiled-egg.jpg',
     description: 'Whole boiled chicken egg delivering complete amino acids, choline, and essential minerals.',
     micronutrients: { sodium_mg: 62, potassium_mg: 63, calcium_mg: 25, iron_mg: 0.8, vitamin_c_mg: 0 }
   },
@@ -403,7 +403,7 @@ export const INITIAL_FOODS: FoodItem[] = [
     defaultServing: 1,
     servingUnit: 'piece',
     unitWeightGrams: 90,
-    image: 'https://images.unsplash.com/photo-1510693206972-df098062cb71?w=500&auto=format&fit=crop&q=80',
+    image: '/images/foods/omelette.jpg',
     description: 'Fluffy masala omelette whipped with chopped onions, green chilies, cilantro, and black pepper.',
     micronutrients: { sodium_mg: 220, potassium_mg: 140, calcium_mg: 45, iron_mg: 1.6, vitamin_c_mg: 3 }
   },
