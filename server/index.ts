@@ -19,6 +19,35 @@ app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 // Serve static food images
 app.use('/images', express.static(path.join(process.cwd(), 'public', 'images')));
 
+// Normalize /api prefix if Vercel serverless function strips it
+app.use((req, _res, next) => {
+  if (!req.url.startsWith('/api') && !req.url.startsWith('/images')) {
+    req.url = '/api' + (req.url.startsWith('/') ? req.url : '/' + req.url);
+  }
+  next();
+});
+
+// Root API status endpoint
+app.get(['/api', '/api/'], (req: Request, res: Response) => {
+  res.json({
+    name: 'Smart Nutrition & Calorie Estimator API',
+    status: 'online',
+    version: '1.0.0',
+    primaryEngine: 'Google Gemini API',
+    geminiKeyConfigured: Boolean(process.env.GEMINI_API_KEY),
+    geminiModel: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+    endpoints: [
+      '/api/health',
+      '/api/foods',
+      '/api/meals/today',
+      '/api/gemini/status',
+      '/api/dashboard',
+      '/api/profile',
+      '/api/history'
+    ],
+  });
+});
+
 // Mount Gemini Nutrition Router
 app.use('/api/gemini', nutritionRouter);
 
@@ -540,6 +569,11 @@ app.post('/api/settings/reset-demo', (req: Request, res: Response) => {
   res.json({ success: true, message: 'Sample demo database restored to default fresh state.' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Smart Nutrition & Calorie Estimator API server running on http://localhost:${PORT}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Smart Nutrition & Calorie Estimator API server running on http://localhost:${PORT}`);
+  });
+}
+
+export default app;
+export { app };

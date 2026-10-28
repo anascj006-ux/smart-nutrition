@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
+import { createRequire } from 'module';
 import { FoodItem, INITIAL_FOODS } from '../data/foods';
+
 
 export interface User {
   id: string;
@@ -67,7 +69,17 @@ interface DatabaseSchema {
   analyses: FoodAnalysisRecord[];
 }
 
-const DB_PATH = path.join(process.cwd(), 'server', 'data', 'store.json');
+const require = createRequire(import.meta.url);
+let seedStoreData: DatabaseSchema | null = null;
+try {
+  seedStoreData = require('../data/store.json');
+} catch {
+  // If require fails or in non-Node environment, fallback will use getInitialData()
+}
+
+const IS_VERCEL = Boolean(process.env.VERCEL);
+const ORIGINAL_DB_PATH = path.join(process.cwd(), 'server', 'data', 'store.json');
+const DB_PATH = IS_VERCEL ? path.join('/tmp', 'store.json') : ORIGINAL_DB_PATH;
 
 // Calculate BMR using Mifflin-St Jeor
 export function calculateBMR(weight: number, height: number, age: number, gender: string): number {
@@ -367,9 +379,38 @@ class Store {
 
   private load(): DatabaseSchema {
     try {
+      if (IS_VERCEL && !fs.existsSync(DB_PATH)) {
+        if (seedStoreData) {
+          try {
+            const dir = path.dirname(DB_PATH);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(DB_PATH, JSON.stringify(seedStoreData, null, 2), 'utf-8');
+            return seedStoreData;
+          } catch (writeErr) {
+            console.warn('Could not write seed data to /tmp:', writeErr);
+            return seedStoreData;
+          }
+        } else if (fs.existsSync(ORIGINAL_DB_PATH)) {
+          try {
+            fs.copyFileSync(ORIGINAL_DB_PATH, DB_PATH);
+          } catch (copyErr) {
+            console.warn('Could not copy store to /tmp:', copyErr);
+          }
+        }
+      }
+
       if (fs.existsSync(DB_PATH)) {
         const raw = fs.readFileSync(DB_PATH, 'utf-8');
         return JSON.parse(raw);
+      }
+
+      if (fs.existsSync(ORIGINAL_DB_PATH)) {
+        const raw = fs.readFileSync(ORIGINAL_DB_PATH, 'utf-8');
+        return JSON.parse(raw);
+      }
+
+      if (seedStoreData) {
+        return seedStoreData;
       }
     } catch (e) {
       console.warn('Failed to load store from disk, initializing fresh:', e);
@@ -387,7 +428,7 @@ class Store {
       }
       fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
     } catch (e) {
-      console.error('Error persisting database:', e);
+      console.warn('Error persisting database (in-memory state preserved):', e);
     }
   }
 
