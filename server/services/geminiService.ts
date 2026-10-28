@@ -114,7 +114,7 @@ export async function analyzeFoodWithGemini(
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (isDemo || !apiKey) {
-    return generateDemoResponse(options?.hintFoodName);
+    return generateDemoResponse(options?.hintFoodName, imagePayload);
   }
 
   // 1. Validate image
@@ -188,7 +188,7 @@ Return ONLY a raw JSON object (without markdown code blocks, backticks, or other
   }
 
   console.warn('All Gemini vision models failed or experienced high traffic, activating resilient Demo Mode fallback:', lastError?.message || lastError);
-  return generateDemoResponse(options?.hintFoodName);
+  return generateDemoResponse(options?.hintFoodName, imagePayload);
 }
 
 /**
@@ -413,9 +413,60 @@ function normalizeNutritionResponse(
 /**
  * Fallback Demo Mode response (offline / no API key)
  */
-function generateDemoResponse(queryFoodName?: string): GeminiNutritionResponse {
-  if (queryFoodName && queryFoodName.trim().length > 0) {
-    const rawQ = queryFoodName.trim();
+function generateDemoResponse(queryFoodName?: string, imagePayload?: string): GeminiNutritionResponse {
+  let effectiveQuery = queryFoodName?.trim();
+
+  // If no food name provided, infer from image URL or payload
+  if (!effectiveQuery && imagePayload && typeof imagePayload === 'string') {
+    const imgLower = imagePayload.toLowerCase();
+    
+    // Check direct matches with INITIAL_FOODS
+    const directMatch = INITIAL_FOODS.find((f) => f.image && imgLower.includes(f.image.toLowerCase()));
+    if (directMatch) {
+      effectiveQuery = directMatch.name;
+    } else if (imgLower.includes('dosa') || imgLower.includes('photo-1610192244261')) {
+      effectiveQuery = 'Masala Dosa';
+    } else if (imgLower.includes('photo-1546069901')) {
+      effectiveQuery = 'Rice + Chicken Curry + Salad';
+    } else if (imgLower.includes('paneer') || imgLower.includes('photo-1631452180')) {
+      effectiveQuery = 'Paneer Butter Masala';
+    } else if (imgLower.includes('sambar')) {
+      effectiveQuery = 'Idli & Sambar';
+    } else if (imgLower.includes('apple') || imgLower.includes('photo-1560806887')) {
+      effectiveQuery = 'Fresh Apple';
+    } else if (imgLower.includes('boiled-egg') || imgLower.includes('egg')) {
+      effectiveQuery = 'Boiled Egg';
+    } else if (imgLower.includes('omelette')) {
+      effectiveQuery = 'Masala Omelette';
+    } else if (imgLower.includes('curd-rice')) {
+      effectiveQuery = 'Curd Rice';
+    } else if (imgLower.includes('curd')) {
+      effectiveQuery = 'Curd';
+    } else if (imgLower.includes('lemon-rice')) {
+      effectiveQuery = 'Lemon Rice';
+    } else if (imgLower.includes('upma')) {
+      effectiveQuery = 'Upma';
+    } else if (imgLower.includes('poori')) {
+      effectiveQuery = 'Poori';
+    } else if (imgLower.includes('rasam')) {
+      effectiveQuery = 'Rasam';
+    } else if (imgLower.includes('dal')) {
+      effectiveQuery = 'Dal';
+    } else if (imgLower.includes('pizza') || imgLower.includes('photo-151310489')) {
+      effectiveQuery = 'Pizza';
+    } else if (imgLower.includes('burger') || imgLower.includes('photo-156890134')) {
+      effectiveQuery = 'Burger';
+    } else if (imgLower.includes('tea') || imgLower.includes('chai')) {
+      effectiveQuery = 'Tea';
+    } else if (imgLower.includes('coffee')) {
+      effectiveQuery = 'Coffee';
+    } else if (imgLower.includes('biryani') || imgLower.includes('photo-1563379091')) {
+      effectiveQuery = 'Chicken Biryani';
+    }
+  }
+
+  if (effectiveQuery && effectiveQuery.length > 0) {
+    const rawQ = effectiveQuery;
     const qLower = rawQ.toLowerCase();
 
     // Special handling for combination / multi-food meals: e.g. "Rice + Chicken Curry + Salad"

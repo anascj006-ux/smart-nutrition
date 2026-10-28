@@ -152,7 +152,7 @@ var INITIAL_FOODS = [
     defaultServing: 1,
     servingUnit: "bowl",
     unitWeightGrams: 200,
-    image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500&auto=format&fit=crop&q=80",
+    image: "/images/foods/curd-rice.jpg",
     description: "Cooling probiotic comfort food made of soft rice blended with fresh yogurt and tempered with mustard seeds.",
     micronutrients: { sodium_mg: 280, potassium_mg: 240, calcium_mg: 180, iron_mg: 0.9, vitamin_c_mg: 2 }
   },
@@ -312,7 +312,7 @@ var INITIAL_FOODS = [
     defaultServing: 1,
     servingUnit: "bowl",
     unitWeightGrams: 220,
-    image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500&auto=format&fit=crop&q=80",
+    image: "/images/foods/paneer-butter-masala.jpg",
     description: "Succulent paneer cubes simmered in a luscious creamy tomato butter gravy with crushed kasuri methi.",
     micronutrients: { sodium_mg: 680, potassium_mg: 310, calcium_mg: 340, iron_mg: 1.8, vitamin_c_mg: 10 }
   },
@@ -344,7 +344,7 @@ var INITIAL_FOODS = [
     defaultServing: 1,
     servingUnit: "cup",
     unitWeightGrams: 180,
-    image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&auto=format&fit=crop&q=80",
+    image: "/images/foods/rasam.jpg",
     description: "Peppery South Indian soup infused with tamarind juice, tomatoes, crushed garlic, and cumin.",
     micronutrients: { sodium_mg: 420, potassium_mg: 210, calcium_mg: 24, iron_mg: 1.2, vitamin_c_mg: 14 }
   },
@@ -1183,7 +1183,7 @@ async function analyzeFoodWithGemini(imagePayload, options) {
   const isDemo = options?.forceDemo || process.env.DEMO_MODE === "true";
   const apiKey = process.env.GEMINI_API_KEY;
   if (isDemo || !apiKey) {
-    return generateDemoResponse(options?.hintFoodName);
+    return generateDemoResponse(options?.hintFoodName, imagePayload);
   }
   const { mimeType, base64Data } = await validateAndExtractImageData(imagePayload);
   const systemPrompt = `
@@ -1250,7 +1250,7 @@ Return ONLY a raw JSON object (without markdown code blocks, backticks, or other
     }
   }
   console.warn("All Gemini vision models failed or experienced high traffic, activating resilient Demo Mode fallback:", lastError?.message || lastError);
-  return generateDemoResponse(options?.hintFoodName);
+  return generateDemoResponse(options?.hintFoodName, imagePayload);
 }
 async function analyzeFoodNameWithGemini(foodName, options) {
   const isDemo = options?.forceDemo || process.env.DEMO_MODE === "true";
@@ -1422,9 +1422,55 @@ function normalizeNutritionResponse(parsed, source) {
     ]
   };
 }
-function generateDemoResponse(queryFoodName) {
-  if (queryFoodName && queryFoodName.trim().length > 0) {
-    const rawQ = queryFoodName.trim();
+function generateDemoResponse(queryFoodName, imagePayload) {
+  let effectiveQuery = queryFoodName?.trim();
+  if (!effectiveQuery && imagePayload && typeof imagePayload === "string") {
+    const imgLower = imagePayload.toLowerCase();
+    const directMatch = INITIAL_FOODS.find((f) => f.image && imgLower.includes(f.image.toLowerCase()));
+    if (directMatch) {
+      effectiveQuery = directMatch.name;
+    } else if (imgLower.includes("dosa") || imgLower.includes("photo-1610192244261")) {
+      effectiveQuery = "Masala Dosa";
+    } else if (imgLower.includes("photo-1546069901")) {
+      effectiveQuery = "Rice + Chicken Curry + Salad";
+    } else if (imgLower.includes("paneer") || imgLower.includes("photo-1631452180")) {
+      effectiveQuery = "Paneer Butter Masala";
+    } else if (imgLower.includes("sambar")) {
+      effectiveQuery = "Idli & Sambar";
+    } else if (imgLower.includes("apple") || imgLower.includes("photo-1560806887")) {
+      effectiveQuery = "Fresh Apple";
+    } else if (imgLower.includes("boiled-egg") || imgLower.includes("egg")) {
+      effectiveQuery = "Boiled Egg";
+    } else if (imgLower.includes("omelette")) {
+      effectiveQuery = "Masala Omelette";
+    } else if (imgLower.includes("curd-rice")) {
+      effectiveQuery = "Curd Rice";
+    } else if (imgLower.includes("curd")) {
+      effectiveQuery = "Curd";
+    } else if (imgLower.includes("lemon-rice")) {
+      effectiveQuery = "Lemon Rice";
+    } else if (imgLower.includes("upma")) {
+      effectiveQuery = "Upma";
+    } else if (imgLower.includes("poori")) {
+      effectiveQuery = "Poori";
+    } else if (imgLower.includes("rasam")) {
+      effectiveQuery = "Rasam";
+    } else if (imgLower.includes("dal")) {
+      effectiveQuery = "Dal";
+    } else if (imgLower.includes("pizza") || imgLower.includes("photo-151310489")) {
+      effectiveQuery = "Pizza";
+    } else if (imgLower.includes("burger") || imgLower.includes("photo-156890134")) {
+      effectiveQuery = "Burger";
+    } else if (imgLower.includes("tea") || imgLower.includes("chai")) {
+      effectiveQuery = "Tea";
+    } else if (imgLower.includes("coffee")) {
+      effectiveQuery = "Coffee";
+    } else if (imgLower.includes("biryani") || imgLower.includes("photo-1563379091")) {
+      effectiveQuery = "Chicken Biryani";
+    }
+  }
+  if (effectiveQuery && effectiveQuery.length > 0) {
+    const rawQ = effectiveQuery;
     const qLower = rawQ.toLowerCase();
     if (qLower.includes("+") || qLower.includes("&") && !qLower.includes("dosa")) {
       const parts = rawQ.split(/[+&]/).map((p) => p.trim()).filter(Boolean);

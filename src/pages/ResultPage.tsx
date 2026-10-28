@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Flame,
   Plus,
@@ -51,6 +51,21 @@ export const ResultPage: React.FC<ResultPageProps> = ({ onNavigate }) => {
   const [editCarbs, setEditCarbs] = useState<number>(currentResult?.carbohydrates || 62);
   const [editFat, setEditFat] = useState<number>(currentResult?.fat || 18);
   const [editFiber, setEditFiber] = useState<number>(currentResult?.fiber || 4);
+
+  // Keep edit fields perfectly synchronized when currentResult changes
+  useEffect(() => {
+    if (currentResult) {
+      setEditFoodName(currentResult.foodName || 'Chicken Biryani');
+      setEditAmount(currentResult.quantity || 1);
+      setEditUnit(currentResult.servingUnit || 'plate');
+      setEditGrams(currentResult.estimatedGrams || 350);
+      setEditCalories(currentResult.calories || 520);
+      setEditProtein(currentResult.protein || 28);
+      setEditCarbs(currentResult.carbohydrates || 62);
+      setEditFat(currentResult.fat || 18);
+      setEditFiber(currentResult.fiber || 4);
+    }
+  }, [currentResult]);
 
   // Default baseline data if no active result
   const result = currentResult || {

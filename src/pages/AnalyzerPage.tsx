@@ -113,7 +113,7 @@ export const AnalyzerPage: React.FC<AnalyzerPageProps> = ({ onNavigate }) => {
     {
       name: 'Paneer Butter Masala',
       category: 'Indian Foods',
-      image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=800&auto=format&fit=crop&q=80',
+      image: '/images/foods/paneer-butter-masala.jpg',
       calories: 380,
       protein: 14.5,
       carbohydrates: 16,
@@ -157,6 +157,50 @@ export const AnalyzerPage: React.FC<AnalyzerPageProps> = ({ onNavigate }) => {
         { name: 'Vegetable Sambar', category: 'Indian Foods', confidence: 0.96, serving: { amount: 1, unit: 'bowl', estimatedGrams: 180 }, nutrition: { calories: 130, protein: 5.2, carbohydrates: 19.5, fat: 3.5, fiber: 4.2 } }
       ],
       micronutrients: { sodium_mg: 580, potassium_mg: 370, calcium_mg: 63, iron_mg: 2.9, vitamin_c_mg: 15 }
+    },
+    {
+      name: 'Boiled Egg',
+      category: 'Indian Foods',
+      image: '/images/foods/boiled-egg.jpg',
+      calories: 78,
+      protein: 6.3,
+      carbohydrates: 0.6,
+      fat: 5.3,
+      fiber: 0.0,
+      servingSize: '1 piece (50g)',
+      servingUnit: 'piece',
+      quantity: 1,
+      estimatedGrams: 50,
+      confidence: 0.98,
+      description: 'Whole boiled chicken egg delivering complete amino acids, choline, and essential minerals.',
+      healthInsights: [
+        'Complete bioavailable protein score of 100 with zero glycemic carbohydrates.',
+        'Choline supports memory, neurological signaling, and liver function.',
+        'Rich in lutein and zeaxanthin for macular eye wellness.'
+      ],
+      micronutrients: { sodium_mg: 62, potassium_mg: 63, calcium_mg: 25, iron_mg: 0.8, vitamin_c_mg: 0 }
+    },
+    {
+      name: 'Masala Omelette',
+      category: 'Indian Foods',
+      image: '/images/foods/omelette.jpg',
+      calories: 154,
+      protein: 11.2,
+      carbohydrates: 2.1,
+      fat: 11.5,
+      fiber: 0.4,
+      servingSize: '1 omelette (90g)',
+      servingUnit: 'piece',
+      quantity: 1,
+      estimatedGrams: 90,
+      confidence: 0.96,
+      description: 'Fluffy masala omelette whipped with chopped onions, green chilies, cilantro, and black pepper.',
+      healthInsights: [
+        '11.2g high biological value protein per serving.',
+        'Low net carbs suitable for ketogenic and diabetic meal management.',
+        'Fresh green chilies and onions provide antioxidant capsaicin and quercetin.'
+      ],
+      micronutrients: { sodium_mg: 220, potassium_mg: 140, calcium_mg: 45, iron_mg: 1.6, vitamin_c_mg: 3 }
     },
     {
       name: 'Fresh Apple',
@@ -312,11 +356,12 @@ export const AnalyzerPage: React.FC<AnalyzerPageProps> = ({ onNavigate }) => {
       const endpoint = imagePreview ? '/api/gemini/analyze-food' : '/api/gemini/analyze-food-name';
       const payload: any = { forceDemo: forceDemoMode };
 
+      const nameHint = foodQuery.trim() || selectedSampleName || currentResult?.foodName;
       if (imagePreview) {
         payload.image = imagePreview;
-        if (foodQuery.trim()) payload.foodName = foodQuery.trim();
+        if (nameHint) payload.foodName = nameHint;
       } else {
-        payload.foodName = foodQuery.trim();
+        payload.foodName = nameHint;
       }
 
       const res = await fetch(endpoint, {

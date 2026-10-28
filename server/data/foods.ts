@@ -163,7 +163,7 @@ export const INITIAL_FOODS: FoodItem[] = [
     defaultServing: 1,
     servingUnit: 'bowl',
     unitWeightGrams: 200,
-    image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500&auto=format&fit=crop&q=80',
+    image: '/images/foods/curd-rice.jpg',
     description: 'Cooling probiotic comfort food made of soft rice blended with fresh yogurt and tempered with mustard seeds.',
     micronutrients: { sodium_mg: 280, potassium_mg: 240, calcium_mg: 180, iron_mg: 0.9, vitamin_c_mg: 2 }
   },
@@ -323,7 +323,7 @@ export const INITIAL_FOODS: FoodItem[] = [
     defaultServing: 1,
     servingUnit: 'bowl',
     unitWeightGrams: 220,
-    image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500&auto=format&fit=crop&q=80',
+    image: '/images/foods/paneer-butter-masala.jpg',
     description: 'Succulent paneer cubes simmered in a luscious creamy tomato butter gravy with crushed kasuri methi.',
     micronutrients: { sodium_mg: 680, potassium_mg: 310, calcium_mg: 340, iron_mg: 1.8, vitamin_c_mg: 10 }
   },
@@ -355,7 +355,7 @@ export const INITIAL_FOODS: FoodItem[] = [
     defaultServing: 1,
     servingUnit: 'cup',
     unitWeightGrams: 180,
-    image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&auto=format&fit=crop&q=80',
+    image: '/images/foods/rasam.jpg',
     description: 'Peppery South Indian soup infused with tamarind juice, tomatoes, crushed garlic, and cumin.',
     micronutrients: { sodium_mg: 420, potassium_mg: 210, calcium_mg: 24, iron_mg: 1.2, vitamin_c_mg: 14 }
   },

@@ -140,11 +140,8 @@ export const AddToMealModal: React.FC<AddToMealModalProps> = ({
   // Handle switching meal slot in modal
   const handleSlotChange = (slot: 'breakfast' | 'lunch' | 'snacks' | 'dinner') => {
     setMealType(slot);
-    // If not locked to a specific prop food, switch food to the top recommended for this slot
-    if (!initialFoodName) {
-      const topFood = SLOT_PRESETS[slot]?.[0] || SLOT_PRESETS.lunch[0];
-      setSelectedFood(topFood);
-    }
+    const topFood = SLOT_PRESETS[slot]?.[0] || SLOT_PRESETS.lunch[0];
+    setSelectedFood(topFood);
   };
 
   const currentCalories = Math.round(selectedFood.calories * quantity);
@@ -295,7 +292,7 @@ export const AddToMealModal: React.FC<AddToMealModalProps> = ({
             )}
 
             {/* Quick Clickable Preset Food Pills */}
-            <div className="grid grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
+            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
               {filteredPresets.map((item) => {
                 const isSelected = selectedFood.name === item.name;
                 return (
@@ -305,16 +302,29 @@ export const AddToMealModal: React.FC<AddToMealModalProps> = ({
                     onClick={() => {
                       setSelectedFood(item);
                     }}
-                    className={`text-left p-2.5 rounded-xl border transition-all text-xs flex flex-col justify-between ${
+                    className={`text-left p-2.5 rounded-xl border transition-all text-xs flex flex-col justify-between cursor-pointer ${
                       isSelected
                         ? 'border-emerald-500 bg-emerald-50/90 text-emerald-900 shadow-2xs'
                         : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
                     }`}
                   >
-                    <div className="font-bold truncate">{item.name}</div>
-                    <div className="flex items-center justify-between mt-1 text-[11px] text-slate-500">
+                    <div className="flex items-center justify-between">
+                      <div className="font-bold truncate text-slate-900">{item.name}</div>
+                      {isSelected && (
+                        <span className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between mt-1 text-[11px]">
                       <span className="font-extrabold text-orange-600">{item.calories} kcal</span>
-                      <span className="text-slate-400 font-medium">per {item.servingUnit}</span>
+                      <span className="text-slate-400 font-medium text-[10px]">per {item.servingUnit}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-1 text-[10px] text-slate-500 font-medium">
+                      <span className="text-blue-600">P:{item.protein}g</span>
+                      <span className="text-purple-600">C:{item.carbs}g</span>
+                      <span className="text-amber-600">F:{item.fat}g</span>
+                      <span className="text-emerald-600">Fib:{item.fiber}g</span>
                     </div>
                   </button>
                 );
