@@ -569,7 +569,16 @@ app.post('/api/settings/reset-demo', (req: Request, res: Response) => {
   res.json({ success: true, message: 'Sample demo database restored to default fresh state.' });
 });
 
-if (!process.env.VERCEL) {
+// Global error handling middleware
+app.use((err: any, _req: Request, res: Response, _next: any) => {
+  console.error('API Error:', err);
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: err?.message || String(err),
+  });
+});
+
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
     console.log(`Smart Nutrition & Calorie Estimator API server running on http://localhost:${PORT}`);
   });
